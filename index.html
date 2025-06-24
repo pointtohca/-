@@ -319,6 +319,47 @@
             margin-top: 30px;
         }
         
+        /* Стили для счетчика посещений */
+        .visitor-counter {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, var(--accent), #4a00e0);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s infinite;
+            transition: all 0.3s ease;
+        }
+        
+        .visitor-counter:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .visitor-counter i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .counter-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 40px;
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 201, 240, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0); }
+        }
+        
         @media (max-width: 768px) {
             .logo {
                 font-size: 2.5rem;
@@ -334,6 +375,17 @@
             
             .content-section {
                 padding: 20px;
+            }
+            
+            .visitor-counter {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .visitor-counter i {
+                font-size: 1rem;
             }
         }
     </style>
@@ -791,6 +843,13 @@
         </footer>
     </div>
     
+    <!-- Счетчик посещений -->
+    <div class="visitor-counter" id="visitorCounter">
+        <i class="fas fa-users"></i>
+        <span>Посетителей:</span>
+        <span class="counter-value" id="counterValue">0</span>
+    </div>
+    
     <script>
         // Tab switching functionality
         const tabs = document.querySelectorAll('.tab');
@@ -862,6 +921,61 @@
                 contentSections.forEach(section => section.style.display = 'block');
             }
         });
+        
+        // Counter functionality with Firebase
+        // Конфигурация Firebase (замените на свои данные)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDp4GqD8tZc1VZz9V2QYv5Jq8HfTgHjKLM",
+            authDomain: "visitor-counter-12345.firebaseapp.com",
+            databaseURL: "https://visitor-counter-12345-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "visitor-counter-12345",
+            storageBucket: "visitor-counter-12345.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef1234567890"
+        };
+        
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const counterRef = database.ref('visitorCount');
+        
+        // Проверяем, посещал ли пользователь сайт ранее
+        if (!localStorage.getItem('hasVisited')) {
+            // Если пользователь новый, увеличиваем счетчик
+            counterRef.transaction((currentCount) => {
+                return (currentCount || 0) + 1;
+            });
+            
+            // Сохраняем информацию о посещении
+            localStorage.setItem('hasVisited', 'true');
+        }
+        
+        // Следим за изменениями счетчика в реальном времени
+        counterRef.on('value', (snapshot) => {
+            const count = snapshot.val() || 0;
+            document.getElementById('counterValue').textContent = count;
+            
+            // Анимация при обновлении счетчика
+            const counterElement = document.getElementById('counterValue');
+            counterElement.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                counterElement.style.transform = 'scale(1)';
+            }, 300);
+        });
+        
+        // Анимация при наведении на счетчик
+        const visitorCounter = document.getElementById('visitorCounter');
+        visitorCounter.addEventListener('mouseenter', () => {
+            visitorCounter.style.transform = 'scale(1.05)';
+        });
+        
+        visitorCounter.addEventListener('mouseleave', () => {
+            visitorCounter.style.transform = 'scale(1)';
+        });
     </script>
+    
+    <!-- Подключение Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </body>
 </html>
